@@ -1,37 +1,87 @@
-const colors = require('colors');
+const { DateTime } = require("luxon");
 
-function getPrimeNumbers() {
-    let bottomNumber = +process.argv[2];
-    let topNumber = +process.argv[3];
-    if (process.argv[2] > process.argv[3]) {
-        topNumber = +process.argv[2];
-        bottomNumber = +process.argv[3];
-    }
-    if (isNaN(bottomNumber + topNumber)) {
-        return console.log('Введите числа');
-    }
-    let primeNumbersArray = [];
-    outer: for (let i = bottomNumber; i <= topNumber; i++) {
-        for (let j = 2; j < i; j++) {
-            if (i % j == 0) continue outer;
-        }
-        primeNumbersArray.push(i);
-    }
-    if (primeNumbersArray.length == 0) console.log(colors.red('Простых чисел в диапазоне нет'));
-    primeNumbersArray.forEach(number => {
-        let remainder = (primeNumbersArray.indexOf(number) % 3)
-        switch (remainder) {
-            case 0:
-                console.log(colors.red(number));
-                break;
-            case 1:
-                console.log(colors.yellow(number));
-                break;
-            case 2:
-                console.log(colors.green(number));
-                break;
-        }
-    });
-}
-getPrimeNumbers();
+let parseIntMass = process.argv.map(function (item, index, arr) {
+    let number = parseInt(item);
+    return isNaN(number) ? item : number;
+});
 
+const [, ,
+    myYear,
+    myMonth,
+    myDay,
+    mayHour,
+    myMinute,
+] = parseIntMass;
+
+let myDate = DateTime.fromObject({
+    year: myYear,
+    month: myMonth,
+    day: myDay,
+    hour: mayHour,
+    minute: myMinute,
+    second: 0,
+});
+
+let currentDate = DateTime.now();
+let diffDate = myDate.diff(currentDate, ['year', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
+
+let {
+    years: yearsTmr,
+    months: monthsTmr,
+    days: daysTmr,
+    hours: hoursTmr,
+    minutes: minutesTmr,
+    seconds: secondsTmr,
+} = diffDate;
+
+
+function setTimer() {
+
+    let timer = setInterval(() => {
+        let timeForShow = `${yearsTmr} лет, ${monthsTmr} месяцев, ${daysTmr} дней, ${hoursTmr} часов, ${minutesTmr} минут, ${secondsTmr} секунд`;
+
+        if (yearsTmr == 0 && monthsTmr == 0 && daysTmr == 0 && hoursTmr == 0 && minutesTmr == 0 && secondsTmr < 0) {
+            console.log('Время вышло');
+            clearInterval(timer);
+        }
+        if (secondsTmr < 0) {
+            if (minutesTmr > 0) {
+                --minutesTmr;
+                secondsTmr = '59';
+                console.log(timeForShow);
+            } else if (minutesTmr == 0 && hoursTmr > 0) {
+                --hoursTmr;
+                minutesTmr = '59';
+                secondsTmr = '59';
+                console.log(timeForShow);
+            } else if (minutesTmr == 0 && hoursTmr == 0 && daysTmr > 0) {
+                --daysTmr;
+                hoursTmr = '23';
+                minutesTmr = '59';
+                secondsTmr = '59';
+                console.log(timeForShow);
+            } else if (minutesTmr == 0 && hoursTmr == 0 && daysTmr == 0 && monthsTmr > 0) {
+                --monthsTmr;
+                daysTmr = '30';
+                hoursTmr = '23';
+                minutesTmr = '59';
+                secondsTmr = '59';
+                console.log(timeForShow);
+            } else if (minutesTmr == 0 && hoursTmr == 0 && daysTmr == 0 && monthsTmr == 0 && yearsTmr > 0) {
+                --yearsTmr;
+                monthsTmr = '12';
+                daysTmr = '30';
+                hoursTmr = '23';
+                minutesTmr = '59';
+                secondsTmr = '59';
+                console.log(timeForShow);
+            }
+
+        } else {
+            --secondsTmr;
+            console.log(timeForShow);
+        }
+    }, 1);
+};
+
+setTimer();
