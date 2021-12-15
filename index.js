@@ -107,7 +107,7 @@ function setTimer() {
             emitterTimerConsole.emit('showRemainingTime', timeForShow);
             // console.log(timeForShow);
         }
-    }, 100);
+    }, 1000);
 };
 
 setTimer();
