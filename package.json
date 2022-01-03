@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node cli.js"
+    "start": "node cli.js",
+    "go": "node go.js",
+    "up": "node up.js"
   },
   "bin": {
     "reader": "cli.js"
@@ -22,6 +24,7 @@
   "homepage": "https://github.com/manmanmon/node_js#readme",
   "dependencies": {
     "inquirer": "^8.2.0",
+    "inquirer-fuzzy-path": "^2.3.0",
     "yargs": "^17.3.0"
   }
 }
