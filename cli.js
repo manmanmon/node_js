@@ -1,152 +1,61 @@
-#!/usr/bin/env node
-const fs = require("fs");
-const path = require("path");
-const readline = require('readline');
+const fs = require("fs/promises");
+const { lstatSync } = require("fs");
 const inquirer = require("inquirer");
+const yargs = require("yargs");
+const path = require("path");
 
-// const rl = readline.createInterface({
-//     input: process.stdin,
-//     output: process.stdout,
-// });
-
-// rl.question('Введите путь до файла:', function (inputPath) {
-//     const filePath = path.join(__dirname, inputPath);
-
-//     fs.readFile(filePath, 'utf-8', (err, data) => {
-//         console.log(data);
-//     });
-
-//     rl.close();
-// });
-
-const executionDir = process.cwd();
-// const isFile = (path) => fs.lstatSync(path).isFile();
-// const list = fs.readdirSync(executionDir).filter(isFile);
-const getRootDir = () => path.parse(process.cwd()).root;
-
-inquirer.registerPrompt("fuzzypath", require("inquirer-fuzzy-path"));
-
-inquirer
-  .prompt([
-    {
-      name: "directoryPath",
-      type: "input",
-      message: "Введите путь к дирректории",
-      // choices: list,
-    },
-  ])
-  .then(({ directoryPath }) => {
-    if (directoryPath) {
-      return directoryPath;
-    } else {
-      return (directoryPath = executionDir);
-    }
+const options = yargs
+  .option("d", {
+    describe: "Path to directory",
+    default: process.cwd(),
   })
-  .then((directoryPath) => {
-    inquirer
-      .prompt([
-        {
-          type: "fuzzypath",
-          name: "filePath",
-          excludePath: (nodePath) => nodePath.startsWith("node_modules"),
-          excludeFilter: (nodePath) => nodePath == ".",
-          itemType: "any",
-          rootPath: directoryPath,
-          message: "Выберите папку или файл:",
-          default: directoryPath,
-          suggestOnly: false,
-          depthLimit: 5,
-        },
-      ])
-      .then(({ filePath }) => {
-        // const isFile = (filePath) => fs.lstatSync(filePath).isFile();
-        // const list = fs.readdirSync(filePath).filter(isFile);
+  .option("p", {
+    describe: "Pattern",
+    default: "",
+  }).argv;
+let currentDirectory = options.d;
 
-        // console.log(list);
+class ListItem {
+  constructor(path, fileName) {
+    this.path = path;
+    this.fileName = fileName;
+  }
 
-        // while (!)
-        fs.readFile(filePath, "utf-8", (err, data) => {
-          console.log(data);
-        });
-      });
-  });
-// .then((directoryPath) => {
-//     // const filePath = path.join(directoryPath, file);
-//     // console.log(filePath);
-//     console.log(directoryPath);
-// })
-// .then(({file}, directoryPath) => {
-//     const filePath = path.join(directoryPath, file);
-//     console.log(filePath);
-// })
+  get isDir() {
+    return lstatSync(this.path).isDirectory();
+  }
+}
 
-// const prompt = async (prompt) => new Promise (resolve => inquirer.prompt(prompt, resolve));
+const run = async () => {
+  const list = await fs.readdir(currentDirectory);
+  const items = list.map(
+    (fileName) => new ListItem(path.join(currentDirectory, fileName), fileName)
+  );
 
-// (async() => {
-//     const directoryPath = await prompt([
-//         {
-//             name: 'directoryPath',
-//             type: 'input',
-//             message: 'Введите путь к файлу',
-//             // choices: list,
-//         }
-//     ]);
-//     console.log('123' + directoryPath);
+  const item = await inquirer
+    .prompt([
+      {
+        name: "fileName",
+        type: "list",
+        message: `Choose: ${currentDirectory}`,
+        choices: items.map((item) => ({ name: item.fileName, value: item })),
+      },
+    ])
+    .then((answer) => answer.fileName);
 
-//     // const file = await prompt([
-//     //     {
-//     //       type: 'fuzzypath',
-//     //       name: 'file',
-//     //       excludePath: nodePath => nodePath.startsWith('node_modules'),
-//     //       excludeFilter: nodePath => nodePath == '.',
-//     //       itemType: 'any',
-//     //       rootPath: directoryPath,
-//     //       message: 'Select a target directory for your component:',
-//     //       default: directoryPath,
-//     //       suggestOnly: false,
-//     //       depthLimit: 5,
-//     //     }
-//     // ]);
-//     // const filePath = path.join(directoryPath, file);
-//     // fs.readFile(filePath, 'utf-8', (err, data) => {
-//     //     console.log(data);
-//     // });
-// })()
+  if (item.isDir) {
+    currentDirectory = item.path;
+    return await run();
+  } else {
+    const data = await fs.readFile(item.path, "utf-8");
 
-// inquirer.prompt([
-//     {
-//         name: 'directoryPath',
-//         type: 'input',
-//         message: 'Введите путь к файлу',
-//         // choices: list,
-//     }
-// ]).then(({ directoryPath }) => {
-//     if (directoryPath) {
+    if (!options.p) console.log(data);
+    else {
+      const regExp = new RegExp(options.p, "igm");
+      let coincidences = data.match(regExp).length;
+      console.log("Количество совпадений: " + coincidences);
+    }
+  }
+};
 
-//         console.log(directoryPath);
-//     } else {
-//         directoryPath = executionDir;
-//     }
-// })
-// .then(prompt([
-//     {
-//         name: 'filePath',
-//         type: 'list',
-//         message: 'dsdssd',
-//         choices: list,
-//     }
-// ]))
-
-// inquirer.prompt([
-//     {
-//         name: 'fileName',
-//         type: 'list',
-//         message: 'Выберите файл',
-//         choices: list,
-//     }
-// ]).then(({ fileName }) => {
-//     const filePath = path.join(executionDir, fileName);
-//     fs.readFile(filePath, 'utf-8', (err, data) => {
-//         console.log(data);
-//     });
-// })
+run();

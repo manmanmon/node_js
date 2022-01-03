@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node cli.js",
-    "go": "node go.js",
-    "up": "node up.js"
+    "start": "node cli.js"
   },
   "bin": {
     "reader": "cli.js"
